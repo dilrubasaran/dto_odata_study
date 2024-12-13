@@ -1,0 +1,6 @@
+@dto_odata_study_HostAddress = http://localhost:5102
+
+GET {{dto_odata_study_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
