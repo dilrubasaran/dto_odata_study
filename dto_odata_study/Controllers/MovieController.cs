@@ -1,33 +1,34 @@
-﻿using dto_odata_study.Models;
+﻿using dto_odata_study.DTOs.dto_odata_study.DTOs;
+using dto_odata_study.Models;
 using dto_odata_study.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.OData.Query;
+using Microsoft.AspNetCore.OData.Routing.Controllers;
 
-namespace dto_odata_study.Controllers
+[Route("odata/[controller]")]
+public class MoviesController : ODataController
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class MoviesController : ControllerBase
+    private readonly IGeneralService<MovieModel, MovieDto> _service;
+
+    public MoviesController(IGeneralService<MovieModel, MovieDto> service)
     {
-        private readonly IMovieService _movieService;
-
-        public MoviesController(IMovieService movieService)
-        {
-            _movieService = movieService;
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetMovies()
-        {
-            var movies = await _movieService.GetMoviesWithCategoriesAsync();
-            return Ok(movies);
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CreateMovie([FromBody] MovieModel movie)
-        {
-            await _movieService.AddAsync(movie);
-            return CreatedAtAction(nameof(GetMovies), new { id = movie.Id }, movie);
-        }
+        _service = service;
     }
 
+    [EnableQuery]
+    [HttpGet]
+    public async Task<IActionResult> Get()
+    {
+        var movies = await _service.GetAllAsync();
+        return Ok(movies.AsQueryable());
+    }
+
+    [EnableQuery]
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get(int id)
+    {
+        var movie = await _service.GetByIdAsync(id);
+        if (movie == null) return NotFound();
+        return Ok(movie);
+    }
 }

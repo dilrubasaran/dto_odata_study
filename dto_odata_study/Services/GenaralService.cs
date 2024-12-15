@@ -1,50 +1,73 @@
 ﻿using dto_odata_study.Context;
+using dto_odata_study.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace dto_odata_study.Services
+public class GeneralService<TEntity, TDto> : IGeneralService<TEntity, TDto>
+    where TEntity : class
+    where TDto : class
 {
-    public class GeneralService<T> : IGeneralService<T> where T : class
+    private readonly AppDbContext _context;
+    protected readonly DbSet<TEntity> _dbSet;
+    protected IQueryable<TEntity> QueryableSet()
     {
-        private readonly AppDbContext _context;
-        private readonly DbSet<T> _dbSet;
+        return _dbSet.AsQueryable();
+    }
 
-        public GeneralService(AppDbContext context)
-        {
-            _context = context;
-            _dbSet = _context.Set<T>();
-        }
 
-        public async Task<IEnumerable<T>> GetAllAsync()
-        {
-            return await _dbSet.ToListAsync();
-        }
+    public GeneralService(AppDbContext context)
+    {
+        _context = context;
+        _dbSet = _context.Set<TEntity>();
+    }
 
-        public async Task<T> GetByIdAsync(int id)
-        {
-            return await _dbSet.FindAsync(id);
-        }
+    public async Task<IEnumerable<TDto>> GetAllAsync()
+    {
+        var entities = await _dbSet.ToListAsync();
+        return entities.Select(MapToDto).ToList();
+    }
 
-        public async Task AddAsync(T entity)
+    public async Task<TDto?> GetByIdAsync(int id)
+    {
+        var entity = await _dbSet.FindAsync(id);
+        return entity != null ? MapToDto(entity) : null;
+    }
+
+    public async Task AddAsync(TDto dto)
+    {
+        var entity = MapToEntity(dto);
+        await _dbSet.AddAsync(entity);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task UpdateAsync(int id, TDto dto)
+    {
+        var existingEntity = await _dbSet.FindAsync(id);
+        if (existingEntity == null) throw new Exception("Entity not found");
+
+        // Mevcut entity'yi güncellenen entity ile birleştir
+        _context.Entry(existingEntity).CurrentValues.SetValues(MapToEntity(dto));
+
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteAsync(int id)
+    {
+        var entity = await _dbSet.FindAsync(id);
+        if (entity != null)
         {
-            await _dbSet.AddAsync(entity);
+            _dbSet.Remove(entity);
             await _context.SaveChangesAsync();
-        }
-
-        public async Task UpdateAsync(T entity)
-        {
-            _dbSet.Update(entity);
-            await _context.SaveChangesAsync();
-        }
-
-        public async Task DeleteAsync(int id)
-        {
-            var entity = await _dbSet.FindAsync(id);
-            if (entity != null)
-            {
-                _dbSet.Remove(entity);
-                await _context.SaveChangesAsync();
-            }
         }
     }
 
+    // Genel dönüşüm metotları
+    protected virtual TDto MapToDto(TEntity entity)
+    {
+        throw new NotImplementedException("DTO'ya dönüşüm burada yapılmalı.");
+    }
+
+    protected virtual TEntity MapToEntity(TDto dto)
+    {
+        throw new NotImplementedException("Entity dönüşümü burada yapılmalı.");
+    }
 }

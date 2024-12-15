@@ -1,30 +1,71 @@
 ﻿using dto_odata_study.Context;
+using dto_odata_study.DTOs;
+using dto_odata_study.DTOs.dto_odata_study.DTOs;
 using dto_odata_study.Models;
+using dto_odata_study.Services;
 using Microsoft.EntityFrameworkCore;
 
-namespace dto_odata_study.Services
+public interface IMovieService : IGeneralService<MovieModel, MovieDto>
 {
-    public interface IMovieService : IGeneralService<MovieModel>
+    Task<IEnumerable<MovieDto>> GetMoviesWithCategoriesAsync();
+}
+
+public class MovieService : GeneralService<MovieModel, MovieDto>, IMovieService
+{
+    public MovieService(AppDbContext context) : base(context)
     {
-        Task<IEnumerable<MovieModel>> GetMoviesWithCategoriesAsync();
     }
 
-    public class MovieService : GeneralService<MovieModel>, IMovieService
+    protected override MovieDto MapToDto(MovieModel movie)
     {
-        private readonly AppDbContext _context;
-
-        public MovieService(AppDbContext context) : base(context)
+        return new MovieDto
         {
-            _context = context;
-        }
+            Id = movie.Id,
+            Title = movie.Title,
+            ReleaseYear = movie.ReleaseYear,
+            Description = movie.Description,
+            PosterUrl = movie.PosterUrl,
+            Categories = movie.MovieCategories?.Select(mc => mc.Category.Name).ToList(),
+            Roles = movie.MoviePersonRoles?.Select(mpr => new MoviePersonRoleDto
+            {
+                PersonName = mpr.Person?.Name ?? "",
+                RoleName = mpr.Role?.Name ?? ""
+            }).ToList()
+        };
+    }
 
-        public async Task<IEnumerable<MovieModel>> GetMoviesWithCategoriesAsync()
+    protected override MovieModel MapToEntity(MovieDto dto)
+    {
+        return new MovieModel
         {
-            return await _context.Movies
-                .Include(m => m.MovieCategories)
+            Id = dto.Id,
+            Title = dto.Title,
+            ReleaseYear = dto.ReleaseYear,
+            Description = dto.Description,
+            PosterUrl = dto.PosterUrl,
+            MovieCategories = dto.Categories?.Select(categoryName => new MovieCategoryModel
+            {
+                Category = new CategoryModel { Name = categoryName }
+            }).ToList(),
+            MoviePersonRoles = dto.Roles?.Select(roleDto => new MoviePersonRoleModel
+            {
+                Person = new PersonModel { Name = roleDto.PersonName },
+                Role = new RoleModel { Name = roleDto.RoleName }
+            }).ToList()
+        };
+    }
+
+    public async Task<IEnumerable<MovieDto>> GetMoviesWithCategoriesAsync()
+    {
+        var movies = await _dbSet
+            .Include(m => m.MovieCategories)
                 .ThenInclude(mc => mc.Category)
-                .ToListAsync();
-        }
-    }
+            .Include(m => m.MoviePersonRoles)
+                .ThenInclude(mpr => mpr.Person)
+            .Include(m => m.MoviePersonRoles)
+                .ThenInclude(mpr => mpr.Role)
+            .ToListAsync();
 
+        return movies.Select(MapToDto);
+    }
 }

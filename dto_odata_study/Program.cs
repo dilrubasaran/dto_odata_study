@@ -1,4 +1,5 @@
 using dto_odata_study.Context;
+using dto_odata_study.DTOs.dto_odata_study.DTOs;
 using dto_odata_study.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,8 +13,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString);
 });
 
-builder.Services.AddScoped(typeof(IGeneralService<>), typeof(GeneralService<>));
+builder.Services.AddScoped(typeof(IGeneralService<,>), typeof(GeneralService<,>));
 builder.Services.AddScoped<IMovieService, MovieService>();
+
+
 
 
 

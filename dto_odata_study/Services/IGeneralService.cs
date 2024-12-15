@@ -1,12 +1,17 @@
-﻿namespace dto_odata_study.Services
+﻿
+
+namespace dto_odata_study.Services
 {
-    public interface IGeneralService<T> where T : class
+   
+
+    public interface IGeneralService<TEntity, TDto>
     {
-        Task<IEnumerable<T>> GetAllAsync();
-        Task<T> GetByIdAsync(int id);
-        Task AddAsync(T entity);
-        Task UpdateAsync(T entity);
+        Task<IEnumerable<TDto>> GetAllAsync();
+        Task<TDto?> GetByIdAsync(int id);
+        Task AddAsync(TDto dto);
+        Task UpdateAsync(int id, TDto dto);
         Task DeleteAsync(int id);
     }
+
 
 }

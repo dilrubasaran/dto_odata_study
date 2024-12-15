@@ -9,8 +9,8 @@ namespace dto_odata_study.Models
             public int ReleaseYear { get; set; }
             public string? Description { get; set; }
             public string? PosterUrl { get; set; }
-            public List<MovieCategoryModel>? MovieCategories { get; set; }
-            public List<MoviePersonRoleModel>? MoviePersonRoles { get; set; }
+            public List<MovieCategoryModel> MovieCategories { get; set; }
+            public List<MoviePersonRoleModel> MoviePersonRoles { get; set; }
 
     }
 }
