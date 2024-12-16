@@ -1,4 +1,6 @@
-﻿using dto_odata_study.Context;
+﻿using AutoMapper;
+using AutoMapper.QueryableExtensions;
+using dto_odata_study.Context;
 using dto_odata_study.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,34 +9,33 @@ public class GeneralService<TEntity, TDto> : IGeneralService<TEntity, TDto>
     where TDto : class
 {
     private readonly AppDbContext _context;
+    private readonly IMapper _mapper;
     protected readonly DbSet<TEntity> _dbSet;
-    protected IQueryable<TEntity> QueryableSet()
-    {
-        return _dbSet.AsQueryable();
-    }
 
-
-    public GeneralService(AppDbContext context)
+    public GeneralService(AppDbContext context, IMapper mapper)
     {
         _context = context;
+        _mapper = mapper;
         _dbSet = _context.Set<TEntity>();
     }
 
     public async Task<List<TDto>> GetAllAsync()
     {
-        var entities = await _dbSet.ToListAsync();
-        return entities.Select(MapToDto).ToList();
+        // ProjectTo ile DTO'ya dönüşüm
+        return await _dbSet
+            .ProjectTo<TDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
     }
 
     public async Task<TDto?> GetByIdAsync(int id)
     {
         var entity = await _dbSet.FindAsync(id);
-        return entity != null ? MapToDto(entity) : null;
+        return entity != null ? _mapper.Map<TDto>(entity) : null;
     }
 
     public async Task AddAsync(TDto dto)
     {
-        var entity = MapToEntity(dto);
+        var entity = _mapper.Map<TEntity>(dto);
         await _dbSet.AddAsync(entity);
         await _context.SaveChangesAsync();
     }
@@ -44,9 +45,7 @@ public class GeneralService<TEntity, TDto> : IGeneralService<TEntity, TDto>
         var existingEntity = await _dbSet.FindAsync(id);
         if (existingEntity == null) throw new Exception("Entity not found");
 
-        // Mevcut entity'yi güncellenen entity ile birleştir
-        _context.Entry(existingEntity).CurrentValues.SetValues(MapToEntity(dto));
-
+        _mapper.Map(dto, existingEntity);
         await _context.SaveChangesAsync();
     }
 
@@ -58,16 +57,5 @@ public class GeneralService<TEntity, TDto> : IGeneralService<TEntity, TDto>
             _dbSet.Remove(entity);
             await _context.SaveChangesAsync();
         }
-    }
-
-    // Genel dönüşüm metotları
-    protected virtual TDto MapToDto(TEntity entity)
-    {
-        throw new NotImplementedException("DTO'ya dönüşüm burada yapılmalı.");
-    }
-
-    protected virtual TEntity MapToEntity(TDto dto)
-    {
-        throw new NotImplementedException("Entity dönüşümü burada yapılmalı.");
     }
 }
