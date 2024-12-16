@@ -31,4 +31,16 @@ public class MoviesController : ODataController
         if (movie == null) return NotFound();
         return Ok(movie);
     }
+
+    //TODO:  GetMoviesWithCategories ile veri çekme test yazacağım denemek için 
+
+    // [HttpGet("with-categories")]
+    //public async Task<IActionResult> GetMoviesWithCategories()
+    //{
+    //   // Servisten veri çek
+    //    var movies = await _movieService.GetMoviesWithCategoriesAsync();
+
+    //    // Veriyi JSON formatında döndür
+    //    return Ok(movies);
+    //}
 }

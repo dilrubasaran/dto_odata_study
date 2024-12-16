@@ -15,10 +15,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddScoped(typeof(IGeneralService<,>), typeof(GeneralService<,>));
 builder.Services.AddScoped<IMovieService, MovieService>();
-
-
-
-
+builder.Services.AddAutoMapper(typeof(MovieMappingProfile));
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

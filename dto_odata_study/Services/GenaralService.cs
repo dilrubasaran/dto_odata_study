@@ -20,7 +20,7 @@ public class GeneralService<TEntity, TDto> : IGeneralService<TEntity, TDto>
         _dbSet = _context.Set<TEntity>();
     }
 
-    public async Task<IEnumerable<TDto>> GetAllAsync()
+    public async Task<List<TDto>> GetAllAsync()
     {
         var entities = await _dbSet.ToListAsync();
         return entities.Select(MapToDto).ToList();
